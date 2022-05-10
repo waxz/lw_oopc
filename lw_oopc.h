@@ -27,17 +27,34 @@
 #ifndef LW_OOPC_H_INCLUDED_
 #define LW_OOPC_H_INCLUDED_
 
-#include <malloc.h>
+
 
 // 配置宏 (两种配置选其一):
-#define LW_OOPC_USE_STDDEF_OFFSETOF     // 表示使用 C 标准定义的 offsetof
-// #define LW_OOPC_USE_USER_DEFINED_OFFSETOF // 表示使用用户自定义的 lw_oopc_offsetof 宏
+//#define LW_OOPC_USE_STDDEF_OFFSETOF     // 表示使用 C 标准定义的 offsetof
+#define LW_OOPC_USE_USER_DEFINED_OFFSETOF // 表示使用用户自定义的 lw_oopc_offsetof 宏
 
 // 是否支持内存泄露检测，缺省不支持
 // #define LW_OOPC_SUPPORT_MEMORY_LEAK_DETECTOR
 
 // 是否支持调试信息打印 (内存分配和释放的详细信息），缺省关闭打印
 // #define LW_OOPC_PRINT_DEBUG_INFO
+
+// 是否使用malloc
+//#define LW_OOPC_USE_STDLIB_MALLOC     // 表示使用C标准定义的 malloc
+#define LW_OOPC_USE_USER_DEFINED_MALLOC // 表示使用用户自定义的 tinyalloc
+
+#ifdef LW_OOPC_USE_STDLIB_MALLOC
+#include <malloc.h>
+#define lw_oopc_malloc malloc
+#define lw_oopc_free free
+#endif
+
+#ifdef LW_OOPC_USE_USER_DEFINED_MALLOC
+#include "tinyalloc.h"
+#define lw_oopc_malloc ta_alloc
+#define lw_oopc_free ta_free
+#endif
+
 
 #ifdef LW_OOPC_USE_STDDEF_OFFSETOF
 #include <stddef.h>
@@ -69,8 +86,8 @@ void lw_oopc_report();
 
 #define lw_oopc_file_line
 #define lw_oopc_file_line_params
-#define lw_oopc_free free
 #define lw_oopc_delete lw_oopc_free
+
 
 #endif
 
@@ -113,7 +130,7 @@ void type##_ctor(type* cthis) {
 #define CTOR(type)                                      \
     type* type##_new() {                                \
     struct type *cthis;                                 \
-    cthis = (struct type*)malloc(sizeof(struct type));  \
+    cthis = (struct type*)lw_oopc_malloc(sizeof(struct type));  \
     if(!cthis)                                          \
     {                                                   \
         return 0;                                       \
