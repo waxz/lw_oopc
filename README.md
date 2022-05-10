@@ -1,3 +1,53 @@
+增加对没有MMU的嵌入式设备的支持
+=========================
+
+用[tinyalloc](https://github.com/thi-ng/tinyalloc)替换C标准库`malloc.h`中的`malloc`。
+
+
+## `tinyalloc` 用法
+```c
+#include "tinyalloc.h"
+
+#define BUFFER_SIZE 10000
+char BUFFER[BUFFER_SIZE];
+
+int main()
+{
+    ta_init(BUFFER,BUFFER+BUFFER_SIZE,256,16,16);
+    int*ptr = ta_alloc(12);
+    ta_free(ptr);
+    return 0;
+}
+```
+
+## LW_OOPC 用法
+1. 在`lw_oopc.h`中设置`malloc`
+```c
+// 是否使用malloc
+//#define LW_OOPC_USE_STDLIB_MALLOC     // 表示使用C标准定义的 malloc
+#define LW_OOPC_USE_USER_DEFINED_MALLOC // 表示使用用户自定义的 tinyalloc
+```
+2. 如果使用`tinyalloc`需要在`ta_init`之后进行对象创建。
+```c
+int main()
+{
+    ta_init(BUFFER,BUFFER+BUFFER_SIZE,256,16,16);
+    int*ptr = ta_alloc(12);
+    ta_free(ptr);
+    
+    Fish* fish = Fish_new();    // 创建鱼对象
+    Dog* dog = Dog_new();       // 创建狗对象
+    Car* car = Car_new();       // 创建车子对象
+    lw_oopc_delete(fish);
+    lw_oopc_delete(dog);
+    lw_oopc_delete(car);
+
+    return 0;
+}
+```
+
+
+
 LW_OOPC 升级版本发布说明
 =========================
 
